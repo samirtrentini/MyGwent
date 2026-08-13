@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:my_gwent/enums/faction.enum.dart';
-
 import '../../database/deck_dao.dart';
 import '../../models/deck.model.dart';
 
@@ -39,7 +38,8 @@ class _DeckFormScreenState extends State<DeckFormScreen> {
     _nameController.text = deck?.name ?? '';
     _descriptionController.text = deck?.description ?? '';
 
-    _selectedFaction = deck?.faction ?? Faction.northernRealms;
+    _selectedFaction =
+        deck?.faction ?? Faction.northernRealms;
   }
 
   @override
@@ -71,7 +71,7 @@ class _DeckFormScreenState extends State<DeckFormScreen> {
 
       final savedDeck = widget.isEditing
           ? await _updateDeck(deck)
-          : await _deckDao.insert(deck);
+          : await _deckDao.create(deck);
 
       if (!mounted) {
         return;
@@ -210,7 +210,9 @@ class _DeckFormScreenState extends State<DeckFormScreen> {
                   )
                       : const Icon(Icons.save),
                   label: Text(
-                    isEditing ? 'Save Changes' : 'Create Deck',
+                    isEditing
+                        ? 'Save Changes'
+                        : 'Create Deck',
                   ),
                 ),
               ),

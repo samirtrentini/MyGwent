@@ -16,6 +16,7 @@ class CardDao {
         c.id,
         c.title,
         c.power,
+        c.type,
         dc.quantity
       FROM cards c
       INNER JOIN deck_cards dc
@@ -27,6 +28,22 @@ class CardDao {
     return maps.map(GwentCard.fromMap).toList();
   }
 
+  Future<int> _getOrCreateCard(
+      dynamic txn,
+      GwentCard card,
+      ) async {
+    final existing = await txn.rawQuery(
+      'SELECT id FROM cards WHERE title = ? COLLATE NOCASE',
+      [card.title],
+    );
+
+    if (existing.isNotEmpty) {
+      return existing.first['id'] as int;
+    }
+
+    return txn.insert('cards', card.toMap());
+  }
+
   Future<GwentCard> insert({
     required int deckId,
     required GwentCard card,
@@ -34,24 +51,20 @@ class CardDao {
     final db = await _database.database;
 
     return db.transaction((txn) async {
-      final cardId = await txn.insert(
-        'cards',
-        card.toMap(),
-      );
+      final cardId = await _getOrCreateCard(txn, card);
 
-      await txn.insert(
-        'deck_cards',
-        {
-          'deck_id': deckId,
-          'card_id': cardId,
-          'quantity': card.quantity,
-        },
-      );
+      await txn.rawInsert('''
+        INSERT INTO deck_cards (deck_id, card_id, quantity)
+        VALUES (?, ?, ?)
+        ON CONFLICT(deck_id, card_id)
+        DO UPDATE SET quantity = excluded.quantity
+      ''', [deckId, cardId, card.quantity]);
 
       return GwentCard(
         id: cardId,
         title: card.title,
         power: card.power,
+        type: card.type,
         quantity: card.quantity,
       );
     });
@@ -63,18 +76,10 @@ class CardDao {
   }) async {
     final db = await _database.database;
 
-    await db.transaction((txn) async {
-      await txn.delete(
-        'deck_cards',
-        where: 'deck_id = ? AND card_id = ?',
-        whereArgs: [deckId, cardId],
-      );
-
-      await txn.delete(
-        'cards',
-        where: 'id = ?',
-        whereArgs: [cardId],
-      );
-    });
+    await db.delete(
+      'deck_cards',
+      where: 'deck_id = ? AND card_id = ?',
+      whereArgs: [deckId, cardId],
+    );
   }
 }

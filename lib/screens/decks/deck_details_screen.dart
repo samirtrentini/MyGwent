@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:my_gwent/database/card_dao.dart';
+import 'package:my_gwent/enums/card_type.enum.dart';
 import 'package:my_gwent/models/card.model.dart';
 import 'package:my_gwent/models/deck.model.dart';
 
@@ -187,6 +188,7 @@ class _AddCardDialogState extends State<_AddCardDialog> {
   final _quantityController = TextEditingController(
     text: '1',
   );
+  CardType _selectedType = CardType.normal;
 
   @override
   void dispose() {
@@ -205,7 +207,7 @@ class _AddCardDialogState extends State<_AddCardDialog> {
     final title = _titleController.text.trim();
     final powerText = _powerController.text.trim();
     final quantity = int.parse(
-      _quantityController.text,
+      _quantityController.text.trim(),
     );
 
     final card = GwentCard(
@@ -213,6 +215,7 @@ class _AddCardDialogState extends State<_AddCardDialog> {
       power: powerText.isEmpty
           ? null
           : int.parse(powerText),
+      type: _selectedType,
       quantity: quantity,
     );
 
@@ -263,6 +266,33 @@ class _AddCardDialogState extends State<_AddCardDialog> {
                 return null;
               },
             ),
+
+            const SizedBox(height: 16),
+
+            DropdownButtonFormField<CardType>(
+              initialValue: _selectedType,
+              decoration: const InputDecoration(
+                labelText: 'Type',
+                border: OutlineInputBorder(),
+              ),
+              items: CardType.values.map((type) {
+                return DropdownMenuItem<CardType>(
+                  value: type,
+                  child: Text(type.label),
+                );
+              }).toList(),
+              onChanged: (type) {
+                if (type == null) {
+                  return;
+                }
+
+                setState(() {
+                  _selectedType = type;
+                });
+              },
+            ),
+
+            const SizedBox(height: 16),
 
             TextFormField(
               controller: _quantityController,

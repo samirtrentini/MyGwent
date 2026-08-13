@@ -33,8 +33,7 @@ class AppDatabase {
       path,
       version: _databaseVersion,
       onCreate: _onCreate,
-      onUpgrade: _onUpgrade,
-      onOpen: (db) async {
+      onConfigure: (db) async {
         await db.execute('PRAGMA foreign_keys = ON');
       },
     );
@@ -46,35 +45,24 @@ class AppDatabase {
       ) async {
     await db.execute('''
       CREATE TABLE decks (
-        id INTEGER PRIMARY KEY,
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL
           CHECK(length(name) BETWEEN 1 AND 50),
         faction INTEGER NOT NULL,
         description TEXT
-          CHECK(length(description) <= 500)
+          CHECK(description IS NULL OR length(description) <= 500)
       )
     ''');
 
-    await _createCardTables(db);
-  }
-
-  Future<void> _onUpgrade(
-      Database db,
-      int oldVersion,
-      int newVersion,
-      ) async {
-    if (oldVersion < 2) {
-      await _createCardTables(db);
-    }
-  }
-
-  Future<void> _createCardTables(Database db) async {
     await db.execute('''
       CREATE TABLE cards (
-        id INTEGER PRIMARY KEY,
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
         title TEXT NOT NULL
-          CHECK(length(title) BETWEEN 1 AND 100),
-        power INTEGER
+          CHECK(length(title) BETWEEN 1 AND 100)
+          UNIQUE,
+        power INTEGER,
+        type INTEGER NOT NULL DEFAULT 0
+          CHECK(type IN (0, 1, 2))
       )
     ''');
 
@@ -96,5 +84,23 @@ class AppDatabase {
           ON DELETE CASCADE
       )
     ''');
+  }
+
+  /// Use temporariamente durante o desenvolvimento quando o schema mudar.
+  /// Isso apaga o banco local.
+  Future<void> resetDatabase() async {
+    final databasesPath = await getDatabasesPath();
+
+    final path = join(
+      databasesPath,
+      _databaseName,
+    );
+
+    if (_database != null) {
+      await _database!.close();
+      _database = null;
+    }
+
+    await deleteDatabase(path);
   }
 }

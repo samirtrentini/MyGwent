@@ -1,14 +1,18 @@
+import '../enums/card_type.enum.dart';
+
 class GwentCard {
   const GwentCard({
     this.id,
     required this.title,
     this.power,
-    required this.quantity,
+    required this.type,
+    this.quantity = 1,
   });
 
   final int? id;
   final String title;
   final int? power;
+  final CardType type;
   final int quantity;
 
   Map<String, Object?> toMap() {
@@ -16,6 +20,7 @@ class GwentCard {
       'id': id,
       'title': title,
       'power': power,
+      'type': type.id,
     };
   }
 
@@ -24,7 +29,8 @@ class GwentCard {
       id: map['id'] as int?,
       title: map['title'] as String,
       power: map['power'] as int?,
-      quantity: map['quantity'] as int? ?? 1,
+      type: CardType.fromId(map['type'] as int),
+      quantity: (map['quantity'] as int?) ?? 1,
     );
   }
 }

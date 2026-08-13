@@ -1,5 +1,5 @@
 import 'package:sqflite/sqflite.dart';
-
+import '../data/initial_decks.dart';
 import '../models/deck.model.dart';
 import 'app_database.dart';
 
@@ -21,20 +21,65 @@ class DeckDao {
     return maps.map(Deck.fromMap).toList();
   }
 
-  Future<Deck> insert(Deck deck) async {
+  Future<Deck> create(Deck deck) async {
     final db = await _database.database;
 
-    final id = await db.insert(
-      'decks',
-      deck.toMap(),
-      conflictAlgorithm: ConflictAlgorithm.abort,
+    return db.transaction((txn) async {
+      final deckId = await txn.insert(
+        'decks',
+        deck.toMap(),
+      );
+
+      final initialCards = initialDeckCards[deck.faction] ?? [];
+
+      for (final initialCard in initialCards) {
+        final cardId = await _getOrCreateCard(
+          txn,
+          initialCard,
+        );
+
+        await txn.insert(
+          'deck_cards',
+          {
+            'deck_id': deckId,
+            'card_id': cardId,
+            'quantity': initialCard.quantity,
+          },
+        );
+      }
+
+      return Deck(
+        id: deckId,
+        name: deck.name,
+        faction: deck.faction,
+        description: deck.description,
+      );
+    });
+  }
+
+  Future<int> _getOrCreateCard(
+      Transaction txn,
+      InitialDeckCard initialCard,
+      ) async {
+    final existing = await txn.query(
+      'cards',
+      columns: ['id'],
+      where: 'title = ?',
+      whereArgs: [initialCard.title],
+      limit: 1,
     );
 
-    return Deck(
-      id: id,
-      name: deck.name,
-      faction: deck.faction,
-      description: deck.description,
+    if (existing.isNotEmpty) {
+      return existing.first['id'] as int;
+    }
+
+    return txn.insert(
+      'cards',
+      {
+        'title': initialCard.title,
+        'power': initialCard.power,
+        'type': initialCard.type.index,
+      },
     );
   }
 
@@ -52,7 +97,6 @@ class DeckDao {
       deck.toMap(),
       where: 'id = ?',
       whereArgs: [deck.id],
-      conflictAlgorithm: ConflictAlgorithm.abort,
     );
   }
 
