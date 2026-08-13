@@ -38,7 +38,19 @@ class CardDao {
     );
 
     if (existing.isNotEmpty) {
-      return existing.first['id'] as int;
+      final existingId = existing.first['id'] as int;
+
+      await txn.update(
+        'cards',
+        {
+          'power': card.power,
+          'type': card.type.id,
+        },
+        where: 'id = ?',
+        whereArgs: [existingId],
+      );
+
+      return existingId;
     }
 
     return txn.insert('cards', card.toMap());
@@ -68,6 +80,21 @@ class CardDao {
         quantity: card.quantity,
       );
     });
+  }
+
+  Future<void> updateQuantity({
+    required int deckId,
+    required int cardId,
+    required int quantity,
+  }) async {
+    final db = await _database.database;
+
+    await db.update(
+      'deck_cards',
+      {'quantity': quantity},
+      where: 'deck_id = ? AND card_id = ?',
+      whereArgs: [deckId, cardId],
+    );
   }
 
   Future<void> deleteFromDeck({
