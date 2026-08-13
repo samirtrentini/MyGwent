@@ -74,6 +74,7 @@ const Map<Faction, List<InitialDeckCard>> initialDeckCards = {
     InitialDeckCard(
       title: 'Anão escaramuçador',
       quantity: 2,
+      power: 3,
     ),
     InitialDeckCard(
       title: 'Elfo escaramuçador',
@@ -91,8 +92,13 @@ const Map<Faction, List<InitialDeckCard>> initialDeckCards = {
     InitialDeckCard(
       title: 'Médica Hackear',
       quantity: 2,
+      power: 0,
     ),
-    InitialDeckCard(title: 'Schirru', quantity: 1),
+    InitialDeckCard(
+      title: 'Schirru',
+      quantity: 1,
+      power: 6,
+    ),
   ],
 
   Faction.monsters: [
