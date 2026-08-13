@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:my_gwent/screens/game/round_result.dart';
-import 'package:my_gwent/screens/game/winner.enum.dart';
+import 'package:my_gwent/models/round_result.model.dart';
+import 'package:my_gwent/enums/winner.enum.dart';
 
 class RoundHistoryCard extends StatelessWidget {
   const RoundHistoryCard({

@@ -1,4 +1,4 @@
-import 'package:my_gwent/screens/game/winner.enum.dart';
+import 'package:my_gwent/enums/winner.enum.dart';
 
 class RoundResult {
   const RoundResult({
